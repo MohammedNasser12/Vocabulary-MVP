@@ -1,0 +1,46 @@
+# Xcode
+#
+# User-specific files
+*.xcuserdata
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Xcode build products & logs
+build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods & Carthage
+# Uncomment Pods/ if you do not want to check in CocoaPods dependencies
+# Pods/
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Trashes
+
+# Provisioning & Keys
+*.mobileprovision
+*.pem
+*.cer
+*.key
