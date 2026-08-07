@@ -37,8 +37,9 @@ struct VocabularyLevelView: View {
                         title: level.displayText,
                         isSelected: viewModel.selectedVocabularyLevel == level
                     ) {
+                        let isNewSelection = viewModel.selectedVocabularyLevel != level
                         viewModel.selectedVocabularyLevel = level
-                        autoAdvance()
+                        if isNewSelection { autoAdvance() }
                     }
                 }
             }

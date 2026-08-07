@@ -37,8 +37,9 @@ struct CuriosityDriverView: View {
                         title: driver.displayText,
                         isSelected: viewModel.selectedCuriosityDriver == driver
                     ) {
+                        let isNewSelection = viewModel.selectedCuriosityDriver != driver
                         viewModel.selectedCuriosityDriver = driver
-                        autoAdvance()
+                        if isNewSelection { autoAdvance() }
                     }
                 }
             }

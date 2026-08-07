@@ -38,8 +38,9 @@ struct AgeSelectionView: View {
                         title: age.displayText,
                         isSelected: viewModel.selectedAge == age
                     ) {
+                        let isNewSelection = viewModel.selectedAge != age
                         viewModel.selectedAge = age
-                        autoAdvance()
+                        if isNewSelection { autoAdvance() }
                     }
                 }
             }

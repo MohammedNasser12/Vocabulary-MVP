@@ -37,8 +37,9 @@ struct WordsPerWeekView: View {
                         title: option.displayText,
                         isSelected: viewModel.selectedWordsPerWeek == option
                     ) {
+                        let isNewSelection = viewModel.selectedWordsPerWeek != option
                         viewModel.selectedWordsPerWeek = option
-                        autoAdvance()
+                        if isNewSelection { autoAdvance() }
                     }
                 }
             }

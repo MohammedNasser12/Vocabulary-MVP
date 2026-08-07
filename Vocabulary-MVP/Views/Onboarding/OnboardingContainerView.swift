@@ -23,6 +23,23 @@ struct OnboardingContainerView: View {
             .id(viewModel.currentStep)
             .transition(transition(for: viewModel.navigationDirection))
             .animation(.easeInOut(duration: 0.35), value: viewModel.currentStep)
+
+            // Back button overlay (appears on all steps except the first)
+            if viewModel.currentStep.previous != nil {
+                VStack {
+                    HStack {
+                        BackButton {
+                            viewModel.goBack()
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    Spacer()
+                }
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: viewModel.currentStep)
+            }
         }
         .onChange(of: viewModel.isOnboardingComplete) { _, isComplete in
             if isComplete {

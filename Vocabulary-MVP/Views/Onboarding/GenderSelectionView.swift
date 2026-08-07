@@ -38,8 +38,9 @@ struct GenderSelectionView: View {
                         title: gender.displayText,
                         isSelected: viewModel.selectedGender == gender
                     ) {
+                        let isNewSelection = viewModel.selectedGender != gender
                         viewModel.selectedGender = gender
-                        autoAdvance()
+                        if isNewSelection { autoAdvance() }
                     }
                 }
             }
