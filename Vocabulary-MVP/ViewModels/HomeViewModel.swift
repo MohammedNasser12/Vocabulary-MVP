@@ -61,6 +61,7 @@ final class HomeViewModel {
 
     init() {
         loadPreferences()
+        loadRatingsFromSRS()
         loadDailyWords()
     }
 
@@ -103,11 +104,19 @@ final class HomeViewModel {
         wordRatings[word.id]
     }
 
+    /// User-friendly label for next scheduled review (Item B-2).
+    func nextReviewText(for word: Word) -> String? {
+        SpacedRepetitionService.shared.record(for: word.id)?.formattedNextReview
+    }
+
     // MARK: - Actions
 
-    /// Rates a word and auto-advances after a short delay (Item B-1).
+    /// Rates a word, records SRS interval, and auto-advances after a short delay (Item B-1 & B-2).
     func rateWord(_ word: Word, rating: WordRating) {
         wordRatings[word.id] = rating
+
+        // Persist spaced repetition schedule
+        SpacedRepetitionService.shared.recordReview(for: word.id, rating: rating)
 
         switch rating {
         case .knewIt:
@@ -215,6 +224,13 @@ final class HomeViewModel {
         theme = prefs.selectedTheme
         voice = prefs.selectedVoice
         userName = prefs.name
+    }
+
+    private func loadRatingsFromSRS() {
+        let records = SpacedRepetitionService.shared.allRecords()
+        for (id, record) in records {
+            wordRatings[id] = record.rating
+        }
     }
 
     private func loadDailyWords() {

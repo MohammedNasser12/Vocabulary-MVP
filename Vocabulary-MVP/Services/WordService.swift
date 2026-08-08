@@ -16,17 +16,27 @@ final class WordService {
     // MARK: - Public API
 
     /// Returns a set of daily words for the home screen.
+    /// Prioritizes words due for spaced repetition review first (Item B-2).
     /// - Parameter count: Number of words to return (default: 5).
-    /// - Returns: An array of words, shuffled for variety.
+    /// - Returns: An array of words prioritized by spaced repetition schedule.
     func dailyWords(count: Int = Constants.dailyWordCount) -> [Word] {
-        // Use the current date as a seed for consistent daily shuffle
+        let dueIDs = SpacedRepetitionService.shared.dueWordIDs()
+        let dueWords = allWords.filter { dueIDs.contains($0.id) }
+
+        if dueWords.count >= count {
+            return Array(dueWords.prefix(count))
+        }
+
+        // Use the current date as a seed for consistent daily shuffle of remaining words
         let calendar = Calendar.current
         let components = calendar.dateComponents([.year, .month, .day], from: Date())
         let daySeed = (components.year ?? 0) * 10000 + (components.month ?? 0) * 100 + (components.day ?? 0)
 
         var generator = SeededRandomNumberGenerator(seed: UInt64(daySeed))
-        let shuffled = allWords.shuffled(using: &generator)
-        return Array(shuffled.prefix(count))
+        let remainingWords = allWords.filter { !dueIDs.contains($0.id) }.shuffled(using: &generator)
+
+        let combined = dueWords + remainingWords
+        return Array(combined.prefix(count))
     }
 
     /// Returns words filtered by difficulty level.

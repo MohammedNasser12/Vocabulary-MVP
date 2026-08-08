@@ -17,6 +17,7 @@ struct WordCardView: View {
     let isFavorited: Bool
     let isBookmarked: Bool
     let selectedRating: WordRating?
+    let nextReviewText: String?
     let onInfoTapped: () -> Void
     let onShareTapped: () -> Void
     let onFavoriteTapped: () -> Void
@@ -145,6 +146,16 @@ struct WordCardView: View {
                 }
             }
             .padding(.horizontal, 16)
+
+            if let nextReviewText {
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar.badge.clock")
+                    Text(nextReviewText)
+                }
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(textColor.opacity(0.6))
+                .padding(.top, 2)
+            }
         }
         .padding(.top, 4)
     }
@@ -265,6 +276,7 @@ struct WordCardView: View {
             isFavorited: false,
             isBookmarked: true,
             selectedRating: .knewIt,
+            nextReviewText: "Review in 3 days",
             onInfoTapped: { },
             onShareTapped: { },
             onFavoriteTapped: { },

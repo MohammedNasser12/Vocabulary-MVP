@@ -146,6 +146,7 @@ struct HomeView: View {
                 isFavorited: viewModel.isFavorited(word),
                 isBookmarked: viewModel.isBookmarked(word),
                 selectedRating: viewModel.rating(for: word),
+                nextReviewText: viewModel.nextReviewText(for: word),
                 onInfoTapped: { viewModel.showDetail() },
                 onShareTapped: { viewModel.showShare() },
                 onFavoriteTapped: { viewModel.toggleFavorite(word) },
