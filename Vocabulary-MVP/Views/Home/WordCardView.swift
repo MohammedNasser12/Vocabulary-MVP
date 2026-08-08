@@ -1,10 +1,15 @@
 import SwiftUI
 
-/// Full-screen word card displaying a vocabulary word over a themed background.
+/// Full-screen word card with a **tap-to-reveal** learning interaction.
 ///
-/// Shows the word name, phonetic pronunciation, definition, and
-/// action buttons (info, share, favorite, bookmark).
-/// Supports vertical swiping to navigate between words.
+/// The card has two states:
+/// 1. **Face** — Shows the word and phonetic only, prompting the user
+///    to think about the meaning before revealing it.
+/// 2. **Revealed** — Shows the definition and action buttons after the
+///    user taps to reveal.
+///
+/// This creates the crucial "active recall" moment that transforms
+/// passive reading into genuine learning.
 struct WordCardView: View {
 
     let word: Word
@@ -18,38 +23,57 @@ struct WordCardView: View {
     let onSpeakTapped: () -> Void
 
     @State private var isVisible = false
+    @State private var isRevealed = false
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
-            // Word content
-            wordContent
+            // Word content (always visible)
+            faceContent
                 .opacity(isVisible ? 1 : 0)
                 .offset(y: isVisible ? 0 : 30)
 
             Spacer()
-                .frame(height: 24)
+                .frame(height: 20)
 
-            // Action buttons
-            actionButtons
-                .opacity(isVisible ? 1 : 0)
-                .offset(y: isVisible ? 0 : 20)
+            // Revealed content (definition + actions)
+            if isRevealed {
+                revealedContent
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(edge: .bottom)
+                                .combined(with: .opacity),
+                            removal: .opacity
+                        )
+                    )
+            } else {
+                revealHint
+                    .opacity(isVisible ? 1 : 0)
+                    .transition(.opacity)
+            }
 
             Spacer()
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if !isRevealed {
+                revealDefinition()
+            }
+        }
         .onAppear {
             isVisible = false
+            isRevealed = false
             withAnimation(.easeOut(duration: 0.5).delay(0.1)) {
                 isVisible = true
             }
         }
-        .id(word.id) // Reset animation when word changes
+        .id(word.id) // Reset state when word changes
     }
 
-    // MARK: - Word Content
+    // MARK: - Face Content (Word + Phonetic)
 
-    private var wordContent: some View {
+    private var faceContent: some View {
         VStack(spacing: 16) {
             // Word name
             Text(word.text)
@@ -67,13 +91,38 @@ struct WordCardView: View {
             ) {
                 onSpeakTapped()
             }
+        }
+    }
 
+    // MARK: - Reveal Hint
+
+    private var revealHint: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "hand.tap.fill")
+                .font(.system(size: 24))
+                .foregroundStyle(textColor.opacity(0.35))
+                .symbolEffect(.pulse, options: .repeating)
+
+            Text("Tap to reveal definition")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(textColor.opacity(0.4))
+        }
+        .padding(.top, 8)
+    }
+
+    // MARK: - Revealed Content (Definition + Actions)
+
+    private var revealedContent: some View {
+        VStack(spacing: 20) {
             // Definition
             Text("(\(word.partOfSpeech)) \(word.definition)")
                 .font(.appBody)
                 .foregroundStyle(textColor.opacity(0.85))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Constants.horizontalPadding + 8)
+
+            // Action buttons
+            actionButtons
         }
     }
 
@@ -115,6 +164,15 @@ struct WordCardView: View {
         }
     }
 
+    // MARK: - Reveal Action
+
+    private func revealDefinition() {
+        HapticService.shared.lightTap()
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            isRevealed = true
+        }
+    }
+
     // MARK: - Helpers
 
     private var textColor: Color {
@@ -132,7 +190,7 @@ struct WordCardView: View {
 
 // MARK: - Preview
 
-#Preview {
+#Preview("Unrevealed") {
     ZStack {
         LinearGradient.themeGradient(for: .cozyWindow)
             .ignoresSafeArea()
