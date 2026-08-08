@@ -1,14 +1,18 @@
 import SwiftUI
 
-/// Main home screen containing the word card swipe experience,
-/// progress bar, custom tab bar, and optional welcome splash overlay.
+/// Main home screen with a **horizontal card-stack** swipe experience.
 ///
-/// Users swipe vertically to navigate between daily vocabulary words.
-/// A custom tab bar at the bottom shows Words (active) and placeholder tabs.
+/// Replaces the original vertical scroll with a card-stack metaphor:
+/// - Current card is centered at full scale
+/// - Adjacent cards peek from the edges with reduced scale/opacity
+/// - Horizontal swipe to navigate (left = next, right = previous)
+/// - Subtle arrow indicators provide directional clarity
+/// - A custom tab bar shows Words (active) and placeholder tabs
 struct HomeView: View {
 
     @State private var viewModel = HomeViewModel()
     @State private var dragOffset: CGFloat = 0
+    @State private var isDragging = false
 
     var body: some View {
         ZStack {
@@ -22,8 +26,8 @@ struct HomeView: View {
                 topBar
                     .padding(.top, 8)
 
-                // Word card area with swipe gesture
-                wordCardArea
+                // Card-stack area with horizontal swipe
+                cardStackArea
                     .frame(maxHeight: .infinity)
 
                 // Custom tab bar
@@ -95,35 +99,176 @@ struct HomeView: View {
         .padding(.horizontal, 16)
     }
 
-    // MARK: - Word Card Area
+    // MARK: - Card Stack Area
 
-    private var wordCardArea: some View {
+    private var cardStackArea: some View {
         GeometryReader { geometry in
+            let cardWidth = geometry.size.width
+
             ZStack {
-                if let word = viewModel.currentWord {
-                    WordCardView(
-                        word: word,
-                        theme: viewModel.theme,
-                        isFavorited: viewModel.isFavorited(word),
-                        isBookmarked: viewModel.isBookmarked(word),
-                        onInfoTapped: { viewModel.showDetail() },
-                        onShareTapped: { viewModel.showShare() },
-                        onFavoriteTapped: { viewModel.toggleFavorite(word) },
-                        onBookmarkTapped: { viewModel.toggleBookmark(word) },
-                        onSpeakTapped: { viewModel.speakCurrentWord() }
-                    )
-                    .offset(y: dragOffset)
+                // Render adjacent cards for the peek effect
+                ForEach(visibleCardIndices, id: \.self) { index in
+                    cardAtIndex(index, cardWidth: cardWidth)
+                }
+
+                // Navigation arrows (only when not dragging)
+                if !isDragging {
+                    navigationArrows
                 }
             }
             .gesture(
-                DragGesture(minimumDistance: 30, coordinateSpace: .local)
+                DragGesture(minimumDistance: 20, coordinateSpace: .local)
                     .onChanged { value in
-                        dragOffset = value.translation.height * 0.4
+                        isDragging = true
+                        dragOffset = value.translation.width
                     }
                     .onEnded { value in
-                        handleSwipe(value: value, height: geometry.size.height)
+                        isDragging = false
+                        handleHorizontalSwipe(value: value, cardWidth: cardWidth)
                     }
             )
+        }
+    }
+
+    // MARK: - Card at Index
+
+    @ViewBuilder
+    private func cardAtIndex(_ index: Int, cardWidth: CGFloat) -> some View {
+        if viewModel.words.indices.contains(index) {
+            let word = viewModel.words[index]
+            let offset = cardOffsetX(for: index, cardWidth: cardWidth)
+            let scale = cardScale(for: index)
+            let opacity = cardOpacity(for: index)
+
+            WordCardView(
+                word: word,
+                theme: viewModel.theme,
+                isFavorited: viewModel.isFavorited(word),
+                isBookmarked: viewModel.isBookmarked(word),
+                onInfoTapped: { viewModel.showDetail() },
+                onShareTapped: { viewModel.showShare() },
+                onFavoriteTapped: { viewModel.toggleFavorite(word) },
+                onBookmarkTapped: { viewModel.toggleBookmark(word) },
+                onSpeakTapped: { viewModel.speakCurrentWord() }
+            )
+            .frame(width: cardWidth)
+            .scaleEffect(scale)
+            .opacity(opacity)
+            .offset(x: offset)
+            .zIndex(index == viewModel.currentIndex ? 1 : 0)
+            .allowsHitTesting(index == viewModel.currentIndex)
+        }
+    }
+
+    // MARK: - Navigation Arrows
+
+    private var navigationArrows: some View {
+        HStack {
+            // Left arrow (previous)
+            if viewModel.currentIndex > 0 {
+                arrowButton(direction: .left) {
+                    withAnimation(Constants.springAnimation) {
+                        viewModel.goToPreviousWord()
+                    }
+                }
+            }
+
+            Spacer()
+
+            // Right arrow (next)
+            if viewModel.currentIndex < viewModel.totalWords - 1 {
+                arrowButton(direction: .right) {
+                    withAnimation(Constants.springAnimation) {
+                        viewModel.goToNextWord()
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 8)
+    }
+
+    private enum ArrowDirection {
+        case left, right
+    }
+
+    private func arrowButton(direction: ArrowDirection, action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+        } label: {
+            Image(systemName: direction == .left ? "chevron.left" : "chevron.right")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.text(for: viewModel.theme).opacity(0.4))
+                .frame(width: 36, height: 36)
+                .background(
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.4)
+                )
+        }
+        .accessibilityLabel(direction == .left ? "Previous word" : "Next word")
+    }
+
+    // MARK: - Card Stack Calculations
+
+    /// Indices of cards to render (current ± 1 for performance).
+    private var visibleCardIndices: [Int] {
+        let indices = [viewModel.currentIndex - 1, viewModel.currentIndex, viewModel.currentIndex + 1]
+        return indices.filter { viewModel.words.indices.contains($0) }
+    }
+
+    /// Horizontal offset for a card at the given index.
+    private func cardOffsetX(for index: Int, cardWidth: CGFloat) -> CGFloat {
+        let relativeIndex = CGFloat(index - viewModel.currentIndex)
+        return relativeIndex * cardWidth + dragOffset
+    }
+
+    /// Scale factor for a card based on distance from center.
+    private func cardScale(for index: Int) -> CGFloat {
+        if index == viewModel.currentIndex {
+            // Current card scales down slightly as it's dragged away
+            let dragProgress = abs(dragOffset) / 300
+            return max(1.0 - dragProgress * 0.05, 0.95)
+        } else {
+            // Adjacent cards are slightly smaller
+            let dragProgress = abs(dragOffset) / 300
+            return min(0.92 + dragProgress * 0.08, 1.0)
+        }
+    }
+
+    /// Opacity for a card based on distance from center.
+    private func cardOpacity(for index: Int) -> Double {
+        if index == viewModel.currentIndex {
+            return 1.0
+        } else {
+            // Adjacent cards are more transparent
+            let dragProgress = abs(dragOffset) / 300
+            return min(0.4 + dragProgress * 0.6, 1.0)
+        }
+    }
+
+    // MARK: - Horizontal Swipe Handling
+
+    private func handleHorizontalSwipe(value: DragGesture.Value, cardWidth: CGFloat) {
+        let threshold: CGFloat = Constants.swipeThreshold
+        let velocity = value.predictedEndTranslation.width - value.translation.width
+
+        if value.translation.width < -threshold || velocity < -threshold {
+            // Swipe left → next word
+            withAnimation(Constants.springAnimation) {
+                dragOffset = 0
+            }
+            viewModel.goToNextWord()
+        } else if value.translation.width > threshold || velocity > threshold {
+            // Swipe right → previous word
+            withAnimation(Constants.springAnimation) {
+                dragOffset = 0
+            }
+            viewModel.goToPreviousWord()
+        } else {
+            // Snap back
+            withAnimation(Constants.springAnimation) {
+                dragOffset = 0
+            }
         }
     }
 
@@ -159,32 +304,6 @@ struct HomeView: View {
         .contentShape(Rectangle())
         .accessibilityLabel(title)
         .accessibilityAddTraits(isActive ? .isSelected : [])
-    }
-
-    // MARK: - Swipe Handling
-
-    private func handleSwipe(value: DragGesture.Value, height: CGFloat) {
-        let threshold: CGFloat = Constants.swipeThreshold
-        let velocity = value.predictedEndTranslation.height - value.translation.height
-
-        if value.translation.height < -threshold || velocity < -threshold {
-            // Swipe up → next word
-            withAnimation(Constants.springAnimation) {
-                dragOffset = 0
-            }
-            viewModel.goToNextWord()
-        } else if value.translation.height > threshold || velocity > threshold {
-            // Swipe down → previous word
-            withAnimation(Constants.springAnimation) {
-                dragOffset = 0
-            }
-            viewModel.goToPreviousWord()
-        } else {
-            // Snap back
-            withAnimation(Constants.springAnimation) {
-                dragOffset = 0
-            }
-        }
     }
 }
 

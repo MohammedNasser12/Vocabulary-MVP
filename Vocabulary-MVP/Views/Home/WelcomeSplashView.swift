@@ -3,8 +3,9 @@ import SwiftUI
 /// Post-onboarding splash screen — "Welcome to Vocabulary"
 ///
 /// Displays over a blurred themed background with the app name in
-/// large serif text and animated "Swipe up" chevrons. Dismisses
-/// on swipe-up gesture to reveal the first word card.
+/// large serif text and animated "Swipe" chevrons. Dismisses
+/// on horizontal swipe to reveal the first word card, matching
+/// the card-stack navigation direction.
 struct WelcomeSplashView: View {
 
     let theme: AppTheme
@@ -43,39 +44,37 @@ struct WelcomeSplashView: View {
 
                 Spacer()
 
-                // Swipe up indicator
-                VStack(spacing: 4) {
-                    Image(systemName: "chevron.up")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.7))
-
-                    Image(systemName: "chevron.up")
-                        .font(.system(size: 18, weight: .semibold))
+                // Swipe indicator (horizontal)
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.4))
 
-                    Text("Swipe up")
+                    Text("Swipe to start")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.white.opacity(0.6))
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.4))
                 }
-                .offset(y: chevronOffset)
+                .offset(x: chevronOffset)
                 .opacity(isVisible ? 1 : 0)
                 .padding(.bottom, 60)
             }
-            .offset(y: dragOffset)
+            .offset(x: dragOffset)
         }
         .gesture(
             DragGesture(minimumDistance: 20)
                 .onChanged { value in
-                    // Only allow upward swipes
-                    if value.translation.height < 0 {
-                        dragOffset = value.translation.height * 0.5
-                    }
+                    dragOffset = value.translation.width * 0.5
                 }
                 .onEnded { value in
-                    if value.translation.height < -Constants.swipeThreshold {
-                        // Dismiss with animation
+                    if abs(value.translation.width) > Constants.swipeThreshold {
+                        // Dismiss with animation (slide in direction of swipe)
+                        let direction: CGFloat = value.translation.width > 0 ? 1 : -1
                         withAnimation(.easeIn(duration: 0.3)) {
-                            dragOffset = -UIScreen.main.bounds.height
+                            dragOffset = direction * UIScreen.main.bounds.width
                         }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             onDismiss()
@@ -103,7 +102,7 @@ struct WelcomeSplashView: View {
             .easeInOut(duration: 1.2)
             .repeatForever(autoreverses: true)
         ) {
-            chevronOffset = -8
+            chevronOffset = 6
         }
     }
 }
