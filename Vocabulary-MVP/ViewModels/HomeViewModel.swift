@@ -21,6 +21,9 @@ final class HomeViewModel {
     /// Set of bookmarked/saved word IDs.
     var bookmarkedWordIDs: Set<UUID> = []
 
+    /// User self-assessment ratings per word ID (Item B-1).
+    var wordRatings: [UUID: WordRating] = [:]
+
     /// Whether the word detail sheet is presented.
     var isDetailSheetPresented = false
 
@@ -95,7 +98,31 @@ final class HomeViewModel {
         bookmarkedWordIDs.contains(word.id)
     }
 
+    /// User self-assessment rating for a word if rated.
+    func rating(for word: Word) -> WordRating? {
+        wordRatings[word.id]
+    }
+
     // MARK: - Actions
+
+    /// Rates a word and auto-advances after a short delay (Item B-1).
+    func rateWord(_ word: Word, rating: WordRating) {
+        wordRatings[word.id] = rating
+
+        switch rating {
+        case .knewIt:
+            HapticService.shared.success()
+        case .learning:
+            HapticService.shared.buttonPress()
+        case .newWord:
+            HapticService.shared.lightTap()
+        }
+
+        // Auto-advance to next word after rating selection
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            self?.goToNextWord()
+        }
+    }
 
     /// Toggles the favorite state for a word.
     func toggleFavorite(_ word: Word) {

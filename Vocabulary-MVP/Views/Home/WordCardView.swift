@@ -16,11 +16,13 @@ struct WordCardView: View {
     let theme: AppTheme
     let isFavorited: Bool
     let isBookmarked: Bool
+    let selectedRating: WordRating?
     let onInfoTapped: () -> Void
     let onShareTapped: () -> Void
     let onFavoriteTapped: () -> Void
     let onBookmarkTapped: () -> Void
     let onSpeakTapped: () -> Void
+    let onRateTapped: ((WordRating) -> Void)?
 
     @State private var isVisible = false
     @State private var isRevealed = false
@@ -113,7 +115,7 @@ struct WordCardView: View {
     // MARK: - Revealed Content (Definition + Actions)
 
     private var revealedContent: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             // Definition
             Text("(\(word.partOfSpeech)) \(word.definition)")
                 .font(.appBody)
@@ -121,9 +123,61 @@ struct WordCardView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Constants.horizontalPadding + 8)
 
+            // Self-Assessment Ratings (Item B-1)
+            assessmentRatingSection
+
             // Action buttons
             actionButtons
         }
+    }
+
+    // MARK: - Assessment Rating Section (Item B-1)
+
+    private var assessmentRatingSection: some View {
+        VStack(spacing: 8) {
+            Text("How well do you know this word?")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(textColor.opacity(0.45))
+
+            HStack(spacing: 8) {
+                ForEach(WordRating.allCases) { rating in
+                    ratingButton(for: rating)
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+        .padding(.top, 4)
+    }
+
+    private func ratingButton(for rating: WordRating) -> some View {
+        let isSelected = selectedRating == rating
+
+        return Button {
+            onRateTapped?(rating)
+        } label: {
+            Text(rating.label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(isSelected ? .white : textColor)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? rating.accentColor : Color.clear)
+                )
+                .overlay(
+                    Capsule()
+                        .strokeBorder(
+                            isSelected ? rating.accentColor : textColor.opacity(0.2),
+                            lineWidth: isSelected ? 1.5 : 1.0
+                        )
+                )
+                .background(
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                        .opacity(isSelected ? 0.3 : 0.4)
+                )
+        }
+        .buttonStyle(ScaleButtonStyle())
     }
 
     // MARK: - Action Buttons
@@ -210,11 +264,14 @@ struct WordCardView: View {
             theme: .cozyWindow,
             isFavorited: false,
             isBookmarked: true,
+            selectedRating: .knewIt,
             onInfoTapped: { },
             onShareTapped: { },
             onFavoriteTapped: { },
             onBookmarkTapped: { },
-            onSpeakTapped: { }
+            onSpeakTapped: { },
+            onRateTapped: { _ in }
         )
     }
 }
+

@@ -145,11 +145,13 @@ struct HomeView: View {
                 theme: viewModel.theme,
                 isFavorited: viewModel.isFavorited(word),
                 isBookmarked: viewModel.isBookmarked(word),
+                selectedRating: viewModel.rating(for: word),
                 onInfoTapped: { viewModel.showDetail() },
                 onShareTapped: { viewModel.showShare() },
                 onFavoriteTapped: { viewModel.toggleFavorite(word) },
                 onBookmarkTapped: { viewModel.toggleBookmark(word) },
-                onSpeakTapped: { viewModel.speakCurrentWord() }
+                onSpeakTapped: { viewModel.speakCurrentWord() },
+                onRateTapped: { rating in viewModel.rateWord(word, rating: rating) }
             )
             .frame(width: cardWidth)
             .scaleEffect(scale)
