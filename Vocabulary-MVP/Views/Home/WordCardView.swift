@@ -134,13 +134,27 @@ struct WordCardView: View {
     // MARK: - Revealed Content (Definition + Actions)
 
     private var revealedContent: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             // Definition
             Text("(\(word.partOfSpeech)) \(word.definition)")
                 .font(.appBody)
                 .foregroundStyle(textColor.opacity(0.85))
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, Constants.horizontalPadding + 8)
+                .padding(.horizontal, Constants.horizontalPadding)
+
+            // Example Sentence with Highlighted Target Word
+            if let example = word.example {
+                Text.highlightedExample(
+                    sentence: "\"\(example)\"",
+                    targetWord: word.text,
+                    baseColor: textColor.opacity(0.75),
+                    highlightColor: theme.prefersDarkText ? Color.appTealDark : Color.yellow
+                )
+                .font(.system(size: 13))
+                .italic()
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
+            }
 
             // Self-Assessment Ratings (Item B-1)
             assessmentRatingSection

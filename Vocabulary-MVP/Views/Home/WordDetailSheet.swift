@@ -37,10 +37,14 @@ struct WordDetailSheet: View {
                             .font(.appCaption)
                             .foregroundStyle(Color.appTextTertiary)
 
-                        Text(example)
-                            .font(.appBody)
-                            .foregroundStyle(Color.appText)
-                            .italic()
+                        Text.highlightedExample(
+                            sentence: example,
+                            targetWord: word.text,
+                            baseColor: Color.appText,
+                            highlightColor: Color.appTealDark
+                        )
+                        .font(.appBody)
+                        .italic()
                     }
                 }
 
