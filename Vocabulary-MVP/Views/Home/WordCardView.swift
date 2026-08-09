@@ -26,33 +26,16 @@ struct WordCardView: View {
     let onRateTapped: ((WordRating) -> Void)?
 
     @State private var isRevealed = false
+    @State private var flipAngle: Double = 0.0
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
-            // Word content (always 100% visible)
-            faceContent
-
-            Spacer()
-                .frame(height: 24)
-
-            // Revealed content (definition + actions)
-            if isRevealed {
-                revealedContent
-                    .transition(
-                        .asymmetric(
-                            insertion: .move(edge: .bottom)
-                                .combined(with: .opacity),
-                            removal: .opacity
-                        )
-                    )
+        ZStack {
+            if flipAngle < 90 {
+                frontFaceView
             } else {
-                revealHint
-                    .transition(.opacity)
+                backFaceView
+                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
             }
-
-            Spacer()
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 24)
@@ -70,14 +53,42 @@ struct WordCardView: View {
         .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
+        .rotation3DEffect(.degrees(flipAngle), axis: (x: 0, y: 1, z: 0), perspective: 0.4)
         .contentShape(Rectangle())
         .onTapGesture {
             if !isRevealed {
-                revealDefinition()
+                flipCard()
             }
         }
         .onChange(of: word.id) { _ in
-            isRevealed = false
+            withAnimation(.none) {
+                isRevealed = false
+                flipAngle = 0.0
+            }
+        }
+    }
+
+    // MARK: - Card Faces
+
+    private var frontFaceView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            faceContent
+            Spacer()
+                .frame(height: 24)
+            revealHint
+            Spacer()
+        }
+    }
+
+    private var backFaceView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            faceContent
+            Spacer()
+                .frame(height: 16)
+            revealedContent
+            Spacer()
         }
     }
 
@@ -236,12 +247,13 @@ struct WordCardView: View {
         }
     }
 
-    // MARK: - Reveal Action
+    // MARK: - Flip Action
 
-    private func revealDefinition() {
+    private func flipCard() {
         HapticService.shared.lightTap()
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-            isRevealed = true
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.78)) {
+            flipAngle = isRevealed ? 0.0 : 180.0
+            isRevealed.toggle()
         }
     }
 
