@@ -95,7 +95,14 @@ struct WordCardView: View {
     // MARK: - Face Content (Word + Phonetic)
 
     private var faceContent: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
+            // Part of speech & difficulty badges
+            WordBadgeView(
+                partOfSpeech: word.partOfSpeech,
+                difficulty: word.difficulty,
+                useDarkStyle: theme.prefersDarkText
+            )
+
             // Word name
             Text(word.text)
                 .font(wordFont)

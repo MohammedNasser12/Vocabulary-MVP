@@ -20,6 +20,13 @@ struct WordDetailSheet: View {
                     .font(.appHeadline)
                     .foregroundStyle(Color.appText)
 
+                // Part of speech & difficulty badges
+                WordBadgeView(
+                    partOfSpeech: word.partOfSpeech,
+                    difficulty: word.difficulty,
+                    useDarkStyle: true
+                )
+
                 // Phonetic + speaker
                 PhoneticPill(phonetic: word.phonetic, useDarkStyle: true) {
                     SpeechService.shared.speak(word.text, voice: voice)
