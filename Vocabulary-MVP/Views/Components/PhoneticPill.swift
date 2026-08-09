@@ -69,12 +69,24 @@ struct PhoneticPill: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Pronunciation: \(phonetic). Tap to hear.")
-        .onAppear {
-            SpeechService.shared.onSpeechStateChanged = { speaking in
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    isPlaying = speaking
-                    waveAnim = speaking
-                }
+        .onReceive(NotificationCenter.default.publisher(for: SpeechService.speechStateChangedNotification)) { notification in
+            let speaking = notification.userInfo?["isSpeaking"] as? Bool ?? false
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isPlaying = speaking
+                waveAnim = speaking
+            }
+        }
+        .onDisappear {
+            SpeechService.shared.stop()
+            withAnimation(.none) {
+                isPlaying = false
+                waveAnim = false
+            }
+        }
+        .onChange(of: phonetic) { _ in
+            withAnimation(.none) {
+                isPlaying = false
+                waveAnim = false
             }
         }
     }

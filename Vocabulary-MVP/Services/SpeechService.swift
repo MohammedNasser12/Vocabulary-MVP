@@ -9,6 +9,9 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
     /// Shared singleton instance.
     static let shared = SpeechService()
 
+    /// Notification posted whenever speech playback starts, stops, or finishes.
+    static let speechStateChangedNotification = Notification.Name("com.vocabulary.speechStateChangedNotification")
+
     private let synthesizer = AVSpeechSynthesizer()
 
     /// Callback closure triggered when speech playback starts or finishes.
@@ -31,6 +34,7 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
         // Stop any ongoing speech
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
+            notifyState(isSpeaking: false)
         }
 
         let utterance = AVSpeechUtterance(string: text)
@@ -53,6 +57,7 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
     func stop() {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
+            notifyState(isSpeaking: false)
         }
     }
 
@@ -62,6 +67,17 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
     }
 
     // MARK: - Private
+
+    private func notifyState(isSpeaking: Bool) {
+        DispatchQueue.main.async { [weak self] in
+            self?.onSpeechStateChanged?(isSpeaking)
+            NotificationCenter.default.post(
+                name: SpeechService.speechStateChangedNotification,
+                object: nil,
+                userInfo: ["isSpeaking": isSpeaking]
+            )
+        }
+    }
 
     private func configureAudioSession() {
         do {
@@ -88,20 +104,14 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
     // MARK: - AVSpeechSynthesizerDelegate
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async { [weak self] in
-            self?.onSpeechStateChanged?(true)
-        }
+        notifyState(isSpeaking: true)
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async { [weak self] in
-            self?.onSpeechStateChanged?(false)
-        }
+        notifyState(isSpeaking: false)
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async { [weak self] in
-            self?.onSpeechStateChanged?(false)
-        }
+        notifyState(isSpeaking: false)
     }
 }
