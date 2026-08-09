@@ -25,20 +25,17 @@ struct WordCardView: View {
     let onSpeakTapped: () -> Void
     let onRateTapped: ((WordRating) -> Void)?
 
-    @State private var isVisible = false
     @State private var isRevealed = false
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
-            // Word content (always visible)
+            // Word content (always 100% visible)
             faceContent
-                .opacity(isVisible ? 1 : 0)
-                .offset(y: isVisible ? 0 : 30)
 
             Spacer()
-                .frame(height: 20)
+                .frame(height: 24)
 
             // Revealed content (definition + actions)
             if isRevealed {
@@ -52,26 +49,36 @@ struct WordCardView: View {
                     )
             } else {
                 revealHint
-                    .opacity(isVisible ? 1 : 0)
                     .transition(.opacity)
             }
 
             Spacer()
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(cardBackgroundColor)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(cardBorderColor, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
         .contentShape(Rectangle())
         .onTapGesture {
             if !isRevealed {
                 revealDefinition()
             }
         }
-        .onAppear {
-            isVisible = false
+        .onChange(of: word.id) { _ in
             isRevealed = false
-            withAnimation(.easeOut(duration: 0.5).delay(0.1)) {
-                isVisible = true
-            }
         }
-        .id(word.id) // Reset state when word changes
     }
 
     // MARK: - Face Content (Word + Phonetic)
@@ -242,6 +249,22 @@ struct WordCardView: View {
 
     private var textColor: Color {
         Color.text(for: theme)
+    }
+
+    private var cardBackgroundColor: Color {
+        if theme.prefersDarkText {
+            return Color.white.opacity(0.85)
+        } else {
+            return Color.white.opacity(0.12)
+        }
+    }
+
+    private var cardBorderColor: Color {
+        if theme.prefersDarkText {
+            return Color.black.opacity(0.08)
+        } else {
+            return Color.white.opacity(0.2)
+        }
     }
 
     private var wordFont: Font {

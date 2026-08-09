@@ -30,6 +30,9 @@ final class HomeViewModel {
     /// Whether the share sheet is presented.
     var isSharePresented = false
 
+    /// Whether the settings sheet is presented.
+    var isSettingsPresented = false
+
     // MARK: - Welcome Splash
 
     /// Whether to show the welcome splash overlay.
@@ -169,6 +172,33 @@ final class HomeViewModel {
     func showShare() {
         HapticService.shared.lightTap()
         isSharePresented = true
+    }
+
+    /// Shows the settings sheet.
+    func showSettings() {
+        HapticService.shared.lightTap()
+        isSettingsPresented = true
+    }
+
+    /// Resets all daily word learning progress and spaced repetition records.
+    func resetProgress() {
+        SpacedRepetitionService.shared.resetAll()
+        viewedIndices.removeAll()
+        wordRatings.removeAll()
+        currentIndex = 0
+        allWordsViewed = false
+        pulsingSegment = nil
+
+        if !showWelcomeSplash {
+            markCurrentWordViewed()
+        }
+    }
+
+    /// Updates local ViewModel state when user preferences change in settings.
+    func updatePreferences(_ preferences: UserPreferences) {
+        theme = preferences.selectedTheme
+        voice = preferences.selectedVoice
+        userName = preferences.name
     }
 
     /// Navigates to the next word card.

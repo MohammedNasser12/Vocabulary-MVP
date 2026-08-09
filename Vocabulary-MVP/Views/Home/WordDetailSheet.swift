@@ -15,16 +15,6 @@ struct WordDetailSheet: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
-                // Drag indicator
-                HStack {
-                    Spacer()
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.appBorderLight)
-                        .frame(width: 40, height: 5)
-                    Spacer()
-                }
-                .padding(.top, 8)
-
                 // Word name
                 Text(word.text)
                     .font(.appHeadline)
@@ -93,16 +83,19 @@ struct WordDetailSheet: View {
                             .foregroundStyle(Color.appText)
                     }
                 }
-
-                Spacer()
-                    .frame(height: 20)
             }
             .padding(.horizontal, Constants.horizontalPadding)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.appCardBackground)
         .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.hidden)
+        .presentationDragIndicator(.visible)
         .presentationCornerRadius(24)
+        .presentationBackground(Color.appCardBackground)
+        .presentationContentInteraction(.scrolls)
     }
 }
 
