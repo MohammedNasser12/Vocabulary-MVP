@@ -182,15 +182,18 @@ struct HomeView: View {
             action()
         } label: {
             Image(systemName: direction == .left ? "chevron.left" : "chevron.right")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Color.text(for: viewModel.theme).opacity(0.4))
-                .frame(width: 36, height: 36)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(Color.text(for: viewModel.theme).opacity(0.65))
+                .frame(width: 46, height: 46)
                 .background(
                     Circle()
                         .fill(.ultraThinMaterial)
-                        .opacity(0.4)
+                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                 )
+                .contentShape(Rectangle())
         }
+        .frame(width: 56, height: 56)
+        .contentShape(Rectangle())
         .accessibilityLabel(direction == .left ? "Previous word" : "Next word")
     }
 

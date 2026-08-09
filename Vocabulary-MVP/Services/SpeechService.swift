@@ -4,14 +4,19 @@ import AVFoundation
 ///
 /// Supports multiple voice options (American, British, Australian) and
 /// manages a single synthesizer instance for memory efficiency.
-final class SpeechService {
+final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
 
     /// Shared singleton instance.
     static let shared = SpeechService()
 
     private let synthesizer = AVSpeechSynthesizer()
 
-    private init() {
+    /// Callback closure triggered when speech playback starts or finishes.
+    var onSpeechStateChanged: ((Bool) -> Void)?
+
+    override private init() {
+        super.init()
+        synthesizer.delegate = self
         configureAudioSession()
     }
 
@@ -78,5 +83,25 @@ final class SpeechService {
 
         // Fall back to any voice matching the language
         return voices.first(where: { $0.language == option.languageCode })
+    }
+
+    // MARK: - AVSpeechSynthesizerDelegate
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        DispatchQueue.main.async { [weak self] in
+            self?.onSpeechStateChanged?(true)
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        DispatchQueue.main.async { [weak self] in
+            self?.onSpeechStateChanged?(false)
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        DispatchQueue.main.async { [weak self] in
+            self?.onSpeechStateChanged?(false)
+        }
     }
 }
